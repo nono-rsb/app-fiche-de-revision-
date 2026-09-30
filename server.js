@@ -56,6 +56,8 @@ const ALLOWED = {
 
 const app = express();
 app.disable('x-powered-by');
+// Derrière le proxy de l'hébergeur : bonne IP client (limiteur) et bon https dans les liens de partage.
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 app.use(express.json({ limit: '10kb' }));
 
 app.use((req, res, next) => {

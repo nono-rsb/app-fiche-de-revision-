@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: revise-apps
+    runtime: docker
+    plan: starter        # un disque persistant demande un plan payant
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 5
