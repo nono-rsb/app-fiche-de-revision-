@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Révise apps</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <span class="logo">📚 Révise apps</span>
+    <div class="who" id="who" hidden>
+      <span id="whoName"></span>
+      <button class="small" id="logoutBtn">Déconnexion</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. Création de compte / connexion -->
+    <section id="authView" class="card auth" hidden>
+      <h1 id="authTitle">Créer un compte</h1>
+      <p class="sub">Range et partage tes fiches de révision.</p>
+      <form id="authForm">
+        <div id="nameRow">
+          <label for="name">Prénom</label>
+          <input id="name" autocomplete="given-name" maxlength="60">
+        </div>
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <label for="password">Mot de passe <small>(8 caractères min.)</small></label>
+        <input id="password" type="password" autocomplete="current-password" minlength="8" required>
+        <div class="error" id="authError" role="alert"></div>
+        <button class="primary full" id="authSubmit">Créer mon compte</button>
+      </form>
+      <p class="switch"><span id="switchText">Déjà un compte ?</span> <a id="switchLink">Se connecter</a></p>
+    </section>
+
+    <!-- Mes fiches -->
+    <section id="appView" hidden>
+      <div class="bar">
+        <h2>Mes fiches</h2>
+        <button class="primary" id="addBtn">＋ Ajouter une fiche</button>
+      </div>
+      <div class="filters">
+        <input id="q" type="search" placeholder="Rechercher…" aria-label="Rechercher">
+        <select id="fClasse" aria-label="Classe"><option value="">Toutes les classes</option></select>
+        <select id="fMatiere" aria-label="Matière"><option value="">Toutes les matières</option></select>
+      </div>
+      <div id="list"></div>
+    </section>
+  </main>
+
+  <!-- 2 + 3. Dépôt et classement -->
+  <dialog id="addDialog">
+    <form id="addForm">
+      <h3>Nouvelle fiche</h3>
+      <label class="drop" id="drop" style="margin-top:12px">
+        <strong>📄 Dépose un PDF ou prends une photo</strong>
+        PDF, JPG, PNG, WEBP – 20 Mo max
+        <input type="file" id="file" accept="application/pdf,image/*">
+      </label>
+      <div class="picked" id="picked"></div>
+
+      <label for="title">Titre <small>(facultatif)</small></label>
+      <input id="title" maxlength="150">
+
+      <div class="row2">
+        <div>
+          <label for="classe">Classe</label>
+          <input id="classe" list="dlClasse" placeholder="ex : 3e, Terminale" required maxlength="100">
+        </div>
+        <div>
+          <label for="matiere">Matière</label>
+          <input id="matiere" list="dlMatiere" placeholder="ex : Maths" required maxlength="100">
+        </div>
+      </div>
+      <label for="cours">Cours</label>
+      <input id="cours" list="dlCours" placeholder="ex : Théorème de Pythagore" required maxlength="100">
+      <datalist id="dlClasse"></datalist>
+      <datalist id="dlMatiere"></datalist>
+      <datalist id="dlCours"></datalist>
+
+      <div class="error" id="addError" role="alert"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button type="button" id="addCancel">Annuler</button>
+        <button class="primary" id="addSubmit">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 4. Partage par lien -->
+  <dialog id="shareDialog">
+    <h3>Partager par lien</h3>
+    <p style="color:var(--muted);margin:8px 0 0">Toute personne qui a ce lien peut voir la fiche, sans compte.</p>
+    <div class="linkbox">
+      <input id="shareUrl" readonly aria-label="Lien de partage">
+      <button class="primary" id="copyBtn">Copier</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="danger" id="unshareBtn">Désactiver le lien</button>
+      <button id="shareClose">Fermer</button>
+    </div>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

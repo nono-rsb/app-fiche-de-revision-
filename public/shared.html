@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiche partagée – Révise apps</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top"><a class="logo" href="/" style="text-decoration:none">📚 Révise apps</a></header>
+  <main>
+    <section class="card" id="box">Chargement…</section>
+  </main>
+  <script>
+    (async () => {
+      const box = document.getElementById('box');
+      const token = location.pathname.split('/').pop();
+      try {
+        const res = await fetch(`/api/shared/${encodeURIComponent(token)}`);
+        const f = await res.json();
+        if (!res.ok) throw new Error(f.error);
+        document.title = `${f.title} – Révise apps`;
+        const h = document.createElement('h2');
+        h.textContent = f.title;
+        const tags = document.createElement('div');
+        tags.className = 'tags';
+        for (const t of [f.classe, f.matiere, f.cours]) {
+          const s = document.createElement('span');
+          s.className = 'tag';
+          s.textContent = t;
+          tags.append(s);
+        }
+        const by = document.createElement('p');
+        by.style.color = 'var(--muted)';
+        by.textContent = `Partagée par ${f.owner}`;
+        const url = `/api/shared/${encodeURIComponent(token)}/file`;
+        const view = document.createElement('div');
+        view.className = 'viewer';
+        if (f.mime === 'application/pdf') {
+          const i = document.createElement('iframe');
+          i.src = url;
+          i.title = f.title;
+          view.append(i);
+        } else {
+          const i = document.createElement('img');
+          i.src = url;
+          i.alt = f.title;
+          view.append(i);
+        }
+        const dl = document.createElement('a');
+        dl.className = 'btn';
+        dl.href = url;
+        dl.target = '_blank';
+        dl.rel = 'noopener';
+        dl.textContent = 'Ouvrir dans un nouvel onglet';
+        dl.style.marginTop = '12px';
+        box.replaceChildren(h, tags, by, view, dl);
+      } catch (e) {
+        box.textContent = e.message || 'Lien invalide ou désactivé';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "revise-app",
+  "version": "1.0.0",
+  "description": "Appli de fiches de révision : compte, dépôt PDF/photo, classement, partage par lien",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings test/smoke.js"
+  },
+  "engines": { "node": ">=22.13" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "license": "MIT"
+}
