@@ -52,6 +52,8 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   const file = await call(`/api/fiches/${pdf.id}/file`);
   assert.equal(file.status, 200);
   assert.equal(file.headers.get('content-type'), 'application/pdf');
+  assert.equal(file.headers.get('content-security-policy'), null, 'pas de CSP sandbox : les PDF doivent s\'afficher');
+  assert.equal(file.headers.get('x-content-type-options'), 'nosniff');
   const anon = await fetch(`${base}/api/fiches/${pdf.id}/file`);
   assert.equal(anon.status, 401);
 

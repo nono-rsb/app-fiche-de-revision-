@@ -109,8 +109,6 @@ async function sendFile(env, f) {
       'Content-Type': f.mime,
       'Content-Length': String(obj.size),
       'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(f.original_name)}`,
-      // Même en-tête que la version Node (server.js).
-      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
     },

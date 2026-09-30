@@ -156,8 +156,8 @@ function sendFile(res, f) {
     'Content-Disposition',
     `inline; filename*=UTF-8''${encodeURIComponent(f.original_name)}`
   );
-  // Empêche tout script d'un fichier hébergé de s'exécuter dans l'origine de l'appli.
-  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");
+  // Pas de CSP `sandbox` : Chrome refuserait alors d'afficher les PDF. Le type servi vient de la
+  // liste ALLOWED (jamais du client) + nosniff, donc aucun HTML/JS n'est servi depuis les uploads.
   res.sendFile(full);
 }
 
