@@ -4,13 +4,14 @@ const fs = require('fs');
 const path = require('path');
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'revise-'));
 const assert = require('assert');
-const app = require('../server');
+const EXTERNAL = process.env.BASE_URL; // ex : http://localhost:8787 pour tester la version Cloudflare
+const app = EXTERNAL ? null : require('../server');
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 
 (async () => {
-  const server = app.listen(0);
-  const base = `http://127.0.0.1:${server.address().port}`;
+  const server = EXTERNAL ? { close() {} } : app.listen(0);
+  const base = EXTERNAL || `http://127.0.0.1:${server.address().port}`;
   let cookie = '';
   const call = async (url, opts = {}) => {
     const res = await fetch(base + url, { ...opts, headers: { ...(opts.headers || {}), cookie } });

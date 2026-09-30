@@ -5,12 +5,20 @@
   "main": "server.js",
   "scripts": {
     "start": "node --no-warnings server.js",
-    "test": "node --no-warnings test/smoke.js"
+    "test": "node --no-warnings test/smoke.js",
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy",
+    "cf:db": "wrangler d1 execute revise-apps --remote --file=cloudflare/schema.sql"
   },
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "dependencies": {
     "express": "^4.21.2",
     "multer": "^1.4.5-lts.1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.144.0"
+  }
 }

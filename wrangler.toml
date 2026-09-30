@@ -1,0 +1,18 @@
+name = "revise-apps"
+main = "cloudflare/worker.js"
+compatibility_date = "2025-09-01"
+
+# Le front (public/) est servi tel quel ; le Worker ne prend que l'API et les liens de partage.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/s/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "revise-apps"
+database_id = "REMPLACER_PAR_L_ID_DE_LA_BASE"   # affiché par : npx wrangler d1 create revise-apps
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "revise-apps-fichiers"
