@@ -142,7 +142,8 @@ function render() {
     c.get(f.cours).push(f);
   }
   const nodes = [];
-  for (const [classe, matieres] of [...tree].sort((a, b) => a[0].localeCompare(b[0], 'fr', { numeric: true }))) {
+  const classes = [...tree].sort((a, b) => a[0].localeCompare(b[0], 'fr', { numeric: true }));
+  for (const [i, [classe, matieres]] of classes.entries()) {
     const mNodes = [];
     let nClasse = 0;
     for (const [matiere, courses] of [...matieres].sort((a, b) => a[0].localeCompare(b[0], 'fr'))) {
@@ -153,9 +154,9 @@ function render() {
         cNodes.push(group('cours', `📖 ${cours}`, plural(fiches.length), true, ...fiches.map(ficheRow)));
       }
       nClasse += nMat;
-      mNodes.push(group('matiere', matiere, plural(nMat), filtering || matieres.size === 1, ...cNodes));
+      mNodes.push(group('matiere', matiere, plural(nMat), true, ...cNodes));
     }
-    nodes.push(group('classe', `🎓 ${classe}`, plural(nClasse), filtering || tree.size === 1, ...mNodes));
+    nodes.push(group('classe', `🎓 ${classe}`, plural(nClasse), filtering || i === 0, ...mNodes));
   }
   list.replaceChildren(...nodes);
 }
