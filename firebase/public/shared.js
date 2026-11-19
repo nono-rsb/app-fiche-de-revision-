@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
 import { loadFileBlob } from './files.js';
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { doc, getDoc } from './vendor/firebase.js';
 
 const box = document.getElementById('box');
 const id = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');

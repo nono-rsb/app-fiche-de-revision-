@@ -1,11 +1,11 @@
 // Teste firestore.rules avec l'émulateur Firebase.
-// Lancer : npm run test:rules   (Java requis)
+// Lancer : npm run test:rules   (Java requis ; sous Windows/macOS/Linux, avec l'émulateur Firestore)
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, collection, query, where, writeBatch, Bytes } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
-  projectId: 'demo-revise',
+  projectId: 'revisapp-bcc73',
   firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8080 },
 });
 
@@ -73,6 +73,55 @@ await assertFails(deleteDoc(doc(tom, 'shares/f1'))); ok('Tom ne supprime pas le 
 
 await deleteDoc(doc(lea, 'shares/f1'));
 await assertFails(getDoc(doc(anon, 'fiches/f1/chunks/0'))); ok('lien désactivé : le fichier n\'est plus lisible');
+
+// ----- champs facultatifs d'une fiche : miniature, favori, dossiers -----
+await assertSucceeds(setDoc(doc(lea, 'fiches/f10'), fiche({ thumb: 'data:image/jpeg;base64,AAAA', favorite: true, folders: [] }))); ok('fiche avec miniature, favori et dossiers');
+await assertFails(setDoc(doc(lea, 'fiches/f11'), fiche({ thumb: 'x'.repeat(30001) }))); ok('miniature trop grosse refusée');
+await assertFails(setDoc(doc(lea, 'fiches/f12'), fiche({ favorite: 'oui' }))); ok('favori non booléen refusé');
+await assertFails(setDoc(doc(lea, 'fiches/f13'), fiche({ folders: 'abc' }))); ok('dossiers non liste refusé');
+await assertSucceeds(updateDoc(doc(lea, 'fiches/f10'), { favorite: false, title: 'Renommée', classe: '4e' })); ok('Léa modifie titre, classe et favori');
+await assertFails(updateDoc(doc(lea, 'fiches/f10'), { classe: '' })); ok('classe vide refusée à la modification');
+await assertFails(updateDoc(doc(tom, 'fiches/f10'), { favorite: true })); ok('Tom ne modifie pas un favori');
+
+// ----- partage d'un dossier -----
+const folder = (o = {}) => ({
+  ownerId: 'lea', ownerName: 'Léa', label: '3e › Maths', classe: '3e', matiere: 'Maths',
+  items: [{ id: 'f1', title: 'Pythagore', matiere: 'Maths', cours: 'Pythagore', mime: 'application/pdf' }], createdAt: Date.now(), ...o,
+});
+await assertSucceeds(setDoc(doc(lea, 'folderShares/tok1'), folder())); ok('Léa partage un dossier');
+await assertFails(setDoc(doc(tom, 'folderShares/tok2'), folder())); ok('Tom ne partage pas au nom de Léa');
+await assertFails(setDoc(doc(lea, 'folderShares/tok3'), folder({ items: [] }))); ok('dossier vide refusé');
+await assertFails(setDoc(doc(lea, 'folderShares/tok4'), folder({ items: Array.from({ length: 101 }, (_, i) => ({ id: 'x' + i })) }))); ok('plus de 100 fiches refusé');
+await assertSucceeds(getDoc(doc(anon, 'folderShares/tok1'))); ok('anonyme lit un dossier avec le lien');
+await assertFails(getDocs(collection(anon, 'folderShares'))); ok('anonyme ne liste pas les dossiers');
+await assertFails(getDocs(collection(tom, 'folderShares'))); ok('Tom ne liste pas non plus');
+await assertSucceeds(getDocs(query(collection(lea, 'folderShares'), where('ownerId', '==', 'lea')))); ok('Léa liste ses dossiers partagés');
+await assertFails(deleteDoc(doc(tom, 'folderShares/tok1'))); ok('Tom ne supprime pas le dossier');
+await assertSucceeds(updateDoc(doc(lea, 'folderShares/tok1'), { label: '3e › Maths (à jour)' })); ok('Léa met à jour son dossier');
+await assertSucceeds(deleteDoc(doc(lea, 'folderShares/tok1'))); ok('Léa désactive le lien du dossier');
+
+// ----- cartes de révision -----
+const card = (o = {}) => ({
+  ownerId: 'lea', classe: '3e', matiere: 'Maths', cours: 'Pythagore', question: 'a² + b² = ?', answer: 'c²',
+  box: 1, due: Date.now(), reviews: 0, createdAt: Date.now(), ...o,
+});
+await assertSucceeds(setDoc(doc(lea, 'cards/c1'), card())); ok('Léa crée une carte');
+await assertFails(setDoc(doc(tom, 'cards/c2'), card())); ok('Tom ne crée pas de carte au nom de Léa');
+await assertFails(setDoc(doc(anon, 'cards/c3'), card())); ok('anonyme ne crée pas de carte');
+await assertFails(setDoc(doc(lea, 'cards/c4'), card({ question: '' }))); ok('question vide refusée');
+await assertFails(setDoc(doc(lea, 'cards/c5'), card({ box: 6 }))); ok('boîte 6 refusée');
+await assertFails(setDoc(doc(lea, 'cards/c6'), card({ answer: 'x'.repeat(1001) }))); ok('réponse trop longue refusée');
+await assertFails(setDoc(doc(lea, 'cards/c7'), { ...card(), extra: 1 })); ok('champ inconnu refusé dans une carte');
+await assertSucceeds(getDoc(doc(lea, 'cards/c1'))); ok('Léa lit sa carte');
+await assertFails(getDoc(doc(tom, 'cards/c1'))); ok('Tom ne lit pas la carte de Léa');
+await assertFails(getDoc(doc(anon, 'cards/c1'))); ok('anonyme ne lit pas la carte');
+await assertSucceeds(getDocs(query(collection(lea, 'cards'), where('ownerId', '==', 'lea')))); ok('Léa liste ses cartes');
+await assertFails(getDocs(collection(tom, 'cards'))); ok('liste globale des cartes refusée');
+await assertSucceeds(updateDoc(doc(lea, 'cards/c1'), { box: 2, due: Date.now() + 86400000, reviews: 1 })); ok('Léa fait avancer sa carte');
+await assertFails(updateDoc(doc(tom, 'cards/c1'), { box: 5 })); ok('Tom ne modifie pas la carte');
+await assertFails(updateDoc(doc(lea, 'cards/c1'), { ownerId: 'tom' })); ok('on ne peut pas donner sa carte');
+await assertFails(deleteDoc(doc(tom, 'cards/c1'))); ok('Tom ne supprime pas la carte');
+await assertSucceeds(deleteDoc(doc(lea, 'cards/c1'))); ok('Léa supprime sa carte');
 
 // ----- suppression -----
 await assertFails(deleteDoc(doc(tom, 'fiches/f1/chunks/0'))); ok('Tom ne supprime pas un morceau');

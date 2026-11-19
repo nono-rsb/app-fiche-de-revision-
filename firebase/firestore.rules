@@ -6,8 +6,9 @@ service cloud.firestore {
     function okMime(m) { return m in ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']; }
     function okText(s, max) { return s is string && s.size() > 0 && s.size() <= max; }
 
+    // ---------- fiches ----------
     function validFiche(d) {
-      return d.keys().hasOnly(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'chunks', 'shared', 'createdAt'])
+      return d.keys().hasOnly(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'chunks', 'shared', 'createdAt', 'thumb', 'favorite', 'folders'])
         && d.keys().hasAll(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'chunks', 'shared', 'createdAt'])
         && d.ownerId == request.auth.uid
         && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
@@ -16,19 +17,10 @@ service cloud.firestore {
         && d.size is int && d.size >= 0 && d.size <= 5242880
         && d.chunks is int && d.chunks >= 1 && d.chunks <= 7
         && d.shared is bool
-        && d.createdAt is number;
-    }
-
-    function validShare(d, id) {
-      return d.keys().hasOnly(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
-        && d.keys().hasAll(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
-        && d.ownerId == request.auth.uid
-        && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid
-        && okText(d.ownerName, 100) && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
-        && okText(d.originalName, 200)
-        && okMime(d.mime)
-        && d.chunks is int && d.chunks >= 1 && d.chunks <= 7
-        && d.createdAt is number;
+        && d.createdAt is number
+        && (!('thumb' in d) || (d.thumb is string && d.thumb.size() <= 30000))
+        && (!('favorite' in d) || d.favorite is bool)
+        && (!('folders' in d) || (d.folders is list && d.folders.size() <= 20));
     }
 
     // Une fiche n'est visible que par son propriétaire.
@@ -58,13 +50,66 @@ service cloud.firestore {
       allow delete: if signedIn() && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid;
     }
 
-    // Lien de partage : l'identifiant (aléatoire) est le secret. On peut lire une fiche
-    // partagée si on connaît son lien, mais jamais lister les partages.
+    // ---------- partage d'une fiche par lien ----------
+    function validShare(d, id) {
+      return d.keys().hasOnly(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
+        && d.ownerId == request.auth.uid
+        && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid
+        && okText(d.ownerName, 100) && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
+        && okText(d.originalName, 200)
+        && okMime(d.mime)
+        && d.chunks is int && d.chunks >= 1 && d.chunks <= 7
+        && d.createdAt is number;
+    }
+
+    // L'identifiant (aléatoire) est le secret : on peut lire un partage si on connaît son lien,
+    // mais jamais lister les partages.
     match /shares/{id} {
       allow get: if true;
       allow list: if false;
       allow create: if signedIn() && validShare(request.resource.data, id);
       allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validShare(request.resource.data, id);
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ---------- partage d'un dossier (une classe ou une matière) par lien ----------
+    // Contient la liste des fiches à la date du partage ; chaque fiche a aussi son propre document shares/{id}.
+    function validFolder(d) {
+      return d.keys().hasOnly(['ownerId', 'ownerName', 'label', 'classe', 'matiere', 'items', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'ownerName', 'label', 'classe', 'matiere', 'items', 'createdAt'])
+        && d.ownerId == request.auth.uid
+        && okText(d.ownerName, 100) && okText(d.label, 220) && okText(d.classe, 100)
+        && d.matiere is string && d.matiere.size() <= 100
+        && d.items is list && d.items.size() >= 1 && d.items.size() <= 100
+        && d.createdAt is number;
+    }
+
+    match /folderShares/{token} {
+      allow get: if true;
+      allow list: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn() && validFolder(request.resource.data);
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validFolder(request.resource.data);
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ---------- cartes de révision (flashcards) : privées ----------
+    function validCard(d) {
+      return d.keys().hasOnly(['ownerId', 'classe', 'matiere', 'cours', 'question', 'answer', 'box', 'due', 'reviews', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'classe', 'matiere', 'cours', 'question', 'answer', 'box', 'due', 'reviews', 'createdAt'])
+        && d.ownerId == request.auth.uid
+        && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
+        && okText(d.question, 500) && okText(d.answer, 1000)
+        && d.box is int && d.box >= 1 && d.box <= 5
+        && d.due is number
+        && d.reviews is int && d.reviews >= 0
+        && d.createdAt is number;
+    }
+
+    match /cards/{id} {
+      allow get, list: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn() && validCard(request.resource.data);
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validCard(request.resource.data);
       allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
     }
   }

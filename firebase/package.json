@@ -1,14 +1,17 @@
 {
   "name": "revise-apps-firebase",
   "private": true,
-  "description": "Version Firebase de R\u00e9vise apps (Auth + Firestore + Hosting, sans Cloud Storage)",
+  "description": "Version Firebase de Révise apps (Auth + Firestore + Hosting, sans Cloud Storage)",
   "scripts": {
-    "test:rules": "firebase emulators:exec --project demo-revise --only firestore \"node test/rules.test.mjs\"",
-    "deploy": "firebase deploy"
+    "test:rules": "firebase emulators:exec --project revisapp-bcc73 --only firestore \"node test/rules.test.mjs\"",
+    "deploy": "firebase deploy",
+    "build:vendor": "esbuild vendor-entry.js --bundle --format=esm --minify --legal-comments=none --outfile=public/vendor/firebase.js"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",
     "firebase": "^12.0.0",
-    "firebase-tools": "^14.0.0"
+    "firebase-tools": "^14.0.0",
+    "esbuild": "^0.25.0",
+    "qrcode-generator": "^2.0.4"
   }
 }
