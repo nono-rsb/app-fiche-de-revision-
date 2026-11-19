@@ -68,3 +68,18 @@ Forfait Spark : 1 Go de stockage, 50 000 lectures et 20 000 écritures par jour.
    ```
 
 Test des règles de sécurité avec l'émulateur (Java requis) : `cd firebase && npm run test:rules`.
+
+### Déploiement automatique du site (GitHub Actions)
+
+`.github/workflows/firebase-hosting.yml` publie le site à chaque mise à jour de `firebase/public/` sur `main` ou
+`claude/new-session-3z4dvs`. Réglage unique, sur ton PC :
+
+```bash
+cd firebase
+npx firebase login
+npx firebase init hosting:github
+```
+Réponses : dépôt `nono-rsb/app-fiche-de-revision-` ; script de build avant déploiement : **non** ; déploiement
+automatique à la fusion : **non** ; aperçu des pull requests : **non** (ce workflow-ci s'en charge).
+La commande crée le secret `FIREBASE_SERVICE_ACCOUNT_REVISAPP_BCC73` dans le dépôt. Les règles Firestore restent à
+publier à la main après un changement : `cd firebase && npx firebase deploy --only firestore`.

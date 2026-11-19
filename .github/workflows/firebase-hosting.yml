@@ -1,0 +1,35 @@
+# Met le site en ligne (Firebase Hosting) à chaque mise à jour du dossier firebase/public.
+# Nécessite le secret FIREBASE_SERVICE_ACCOUNT_REVISAPP_BCC73, créé par :  npx firebase init hosting:github
+# Les règles Firestore ne sont PAS publiées ici : après un changement de firestore.rules,
+# lancer à la main :  cd firebase && npx firebase deploy --only firestore
+name: Déployer le site
+
+on:
+  push:
+    branches: [main, claude/new-session-3z4dvs]
+    paths:
+      - "firebase/public/**"
+      - "firebase/firebase.json"
+      - ".github/workflows/firebase-hosting.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REVISAPP_BCC73 }}
+          projectId: revisapp-bcc73
+          channelId: live
+          entryPoint: firebase
