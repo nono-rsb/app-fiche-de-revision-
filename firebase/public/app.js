@@ -1,19 +1,16 @@
-import { auth, db, storage } from './firebase.js';
+import { auth, db } from './firebase.js';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   collection, doc, query, where, getDocs, setDoc, updateDoc, deleteDoc,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+import { saveFile, loadFileBlob, deleteFile, prepareFile, CHUNK_SIZE } from './files.js';
 
 const $ = (id) => document.getElementById(id);
 const state = { user: null, fiches: [], mode: 'register', shareId: null, registering: false };
 
-const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const clean = (v, max = 100) => String(v || '').trim().replace(/\s+/g, ' ').slice(0, max);
-const filePath = (uid, id) => `fiches/${uid}/${id}`;
 
 const AUTH_ERRORS = {
   'auth/email-already-in-use': 'Un compte existe déjà avec cet email',
@@ -25,7 +22,7 @@ const AUTH_ERRORS = {
   'auth/too-many-requests': 'Trop de tentatives, réessaie plus tard.',
   'auth/network-request-failed': 'Problème de connexion, réessaie.',
 };
-const errMsg = (e) => AUTH_ERRORS[e.code] || (e.code === 'permission-denied' || e.code === 'storage/unauthorized' ? 'Action non autorisée' : e.message || 'Erreur');
+const errMsg = (e) => AUTH_ERRORS[e.code] || (e.code === 'permission-denied' ? 'Action non autorisée' : e.message || 'Erreur');
 
 function toast(msg) {
   const t = document.createElement('div');
@@ -89,6 +86,7 @@ $('authForm').onsubmit = async (e) => {
 };
 
 $('logoutBtn').onclick = async () => {
+  state.mode = 'login'; // après déconnexion, on propose « Se connecter »
   await signOut(auth).catch(() => {});
 };
 
@@ -194,13 +192,10 @@ function ficheRow(f) {
   const link = el('a', { href: '#', textContent: f.title });
   link.onclick = async (e) => {
     e.preventDefault();
-    const w = window.open('about:blank', '_blank'); // ouvert tout de suite pour ne pas être bloqué
+    const w = window.open('about:blank', '_blank'); // ouvert tout de suite pour ne pas être bloqué par le navigateur
     try {
-      const url = await getDownloadURL(ref(storage, filePath(f.ownerId, f.id)));
-      if (w) {
-        w.opener = null;
-        w.location.href = url;
-      }
+      const url = URL.createObjectURL(await loadFileBlob(f.id, f.chunks, f.mime));
+      if (w) w.location.href = url;
     } catch (err) {
       if (w) w.close();
       toast(errMsg(err));
@@ -216,9 +211,9 @@ function ficheRow(f) {
   del.onclick = async () => {
     if (!confirm(`Supprimer « ${f.title} » ?`)) return;
     try {
+      await deleteFile(f.id, f.chunks); // d'abord le contenu, tant que la fiche existe encore
       if (f.shared) await deleteDoc(doc(db, 'shares', f.id));
       await deleteDoc(doc(db, 'fiches', f.id));
-      await deleteObject(ref(storage, filePath(f.ownerId, f.id))).catch(() => {});
     } catch (err) {
       return toast(errMsg(err));
     }
@@ -257,41 +252,39 @@ $('addForm').onsubmit = async (e) => {
   e.preventDefault();
   $('addError').textContent = '';
   if (!$('file').files[0]) return ($('addError').textContent = 'Ajoute un PDF ou une photo');
-  const file = $('file').files[0];
   const classe = clean($('classe').value);
   const matiere = clean($('matiere').value);
   const cours = clean($('cours').value);
-  if (!ALLOWED.includes(file.type)) return ($('addError').textContent = 'Formats acceptés : PDF, JPG, PNG, WEBP, GIF');
-  if (file.size > MAX_FILE_SIZE) return ($('addError').textContent = 'Fichier trop gros (20 Mo max)');
   if (!classe || !matiere || !cours) return ($('addError').textContent = 'Classe, matière et cours sont obligatoires');
   $('addSubmit').disabled = true;
+  $('addSubmit').textContent = 'Envoi…';
   const uid = state.user.uid;
   const docRef = doc(collection(db, 'fiches'));
-  const fileRef = ref(storage, filePath(uid, docRef.id));
+  let created = false;
   try {
-    await uploadBytes(fileRef, file, { contentType: file.type });
-    try {
-      await setDoc(docRef, {
-        ownerId: uid,
-        title: clean($('title').value, 150) || cours,
-        classe, matiere, cours,
-        originalName: file.name.slice(0, 200),
-        mime: file.type,
-        size: file.size,
-        shared: false,
-        createdAt: Date.now(),
-      });
-    } catch (err) {
-      await deleteObject(fileRef).catch(() => {}); // pas de fichier orphelin
-      throw err;
-    }
+    const { bytes, mime } = await prepareFile($('file').files[0]); // photo réduite, PDF contrôlé
+    await setDoc(docRef, {
+      ownerId: uid,
+      title: clean($('title').value, 150) || cours,
+      classe, matiere, cours,
+      originalName: $('file').files[0].name.slice(0, 200),
+      mime,
+      size: bytes.length,
+      chunks: Math.max(1, Math.ceil(bytes.length / CHUNK_SIZE)),
+      shared: false,
+      createdAt: Date.now(),
+    });
+    created = true;
+    await saveFile(docRef.id, uid, bytes);
     addDialog.close();
     toast('Fiche ajoutée ✔');
     await loadFiches();
   } catch (err) {
+    if (created) await deleteDoc(docRef).catch(() => {}); // pas de fiche sans contenu
     $('addError').textContent = errMsg(err);
   } finally {
     $('addSubmit').disabled = false;
+    $('addSubmit').textContent = 'Enregistrer';
   }
 };
 
@@ -303,7 +296,7 @@ async function openShare(f) {
       ownerId: f.ownerId,
       ownerName: state.user.name,
       title: f.title, classe: f.classe, matiere: f.matiere, cours: f.cours,
-      originalName: f.originalName, mime: f.mime, createdAt: f.createdAt,
+      originalName: f.originalName, mime: f.mime, chunks: f.chunks, createdAt: f.createdAt,
     });
     if (!f.shared) await updateDoc(doc(db, 'fiches', f.id), { shared: true });
     state.shareId = f.id;

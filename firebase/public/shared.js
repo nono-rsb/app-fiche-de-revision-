@@ -1,6 +1,6 @@
-import { db, storage } from './firebase.js';
+import { db } from './firebase.js';
+import { loadFileBlob } from './files.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import { ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
 
 const box = document.getElementById('box');
 const id = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
@@ -10,7 +10,7 @@ const id = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop()
     const snap = await getDoc(doc(db, 'shares', id));
     if (!snap.exists()) throw new Error('Lien invalide ou désactivé');
     const f = snap.data();
-    const url = await getDownloadURL(ref(storage, `fiches/${f.ownerId}/${id}`));
+    const url = URL.createObjectURL(await loadFileBlob(id, f.chunks, f.mime));
     document.title = `${f.title} – Révise apps`;
     const h = document.createElement('h2');
     h.textContent = f.title;
@@ -47,6 +47,6 @@ const id = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop()
     dl.style.marginTop = '12px';
     box.replaceChildren(h, tags, by, view, dl);
   } catch (e) {
-    box.textContent = e.code === 'permission-denied' || e.code === 'storage/unauthorized' ? 'Lien invalide ou désactivé' : e.message || 'Lien invalide ou désactivé';
+    box.textContent = e.code === 'permission-denied' ? 'Lien invalide ou désactivé' : e.message || 'Lien invalide ou désactivé';
   }
 })();

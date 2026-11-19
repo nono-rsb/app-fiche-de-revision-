@@ -1,9 +1,9 @@
 {
   "name": "revise-apps-firebase",
   "private": true,
-  "description": "Version Firebase de Révise apps (Auth + Firestore + Storage + Hosting)",
+  "description": "Version Firebase de R\u00e9vise apps (Auth + Firestore + Hosting, sans Cloud Storage)",
   "scripts": {
-    "test:rules": "firebase emulators:exec --project demo-revise --only firestore,storage \"node test/rules.test.mjs\"",
+    "test:rules": "firebase emulators:exec --project demo-revise --only firestore \"node test/rules.test.mjs\"",
     "deploy": "firebase deploy"
   },
   "devDependencies": {

@@ -7,25 +7,27 @@ service cloud.firestore {
     function okText(s, max) { return s is string && s.size() > 0 && s.size() <= max; }
 
     function validFiche(d) {
-      return d.keys().hasOnly(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'shared', 'createdAt'])
-        && d.keys().hasAll(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'shared', 'createdAt'])
+      return d.keys().hasOnly(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'chunks', 'shared', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'chunks', 'shared', 'createdAt'])
         && d.ownerId == request.auth.uid
         && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
         && okText(d.originalName, 200)
         && okMime(d.mime)
-        && d.size is int && d.size >= 0 && d.size <= 20971520
+        && d.size is int && d.size >= 0 && d.size <= 5242880
+        && d.chunks is int && d.chunks >= 1 && d.chunks <= 7
         && d.shared is bool
         && d.createdAt is number;
     }
 
     function validShare(d, id) {
-      return d.keys().hasOnly(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'createdAt'])
-        && d.keys().hasAll(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'createdAt'])
+      return d.keys().hasOnly(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'chunks', 'createdAt'])
         && d.ownerId == request.auth.uid
         && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid
         && okText(d.ownerName, 100) && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
         && okText(d.originalName, 200)
         && okMime(d.mime)
+        && d.chunks is int && d.chunks >= 1 && d.chunks <= 7
         && d.createdAt is number;
     }
 
@@ -35,6 +37,25 @@ service cloud.firestore {
       allow create: if signedIn() && validFiche(request.resource.data);
       allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validFiche(request.resource.data);
       allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Contenu du fichier, découpé en morceaux de moins de 1 Mo : fiches/{id}/chunks/0, 1, 2…
+    // Lisible par le propriétaire, ou par quiconque connaît le lien de partage (shares/{id} existe).
+    // Jamais de liste : on lit chaque morceau par son numéro.
+    match /fiches/{id}/chunks/{n} {
+      allow get: if (signedIn() && resource.data.ownerId == request.auth.uid)
+                 || exists(/databases/$(database)/documents/shares/$(id));
+      allow list: if false;
+      allow create: if signedIn()
+                    && request.resource.data.keys().hasOnly(['ownerId', 'data'])
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.data is bytes
+                    && request.resource.data.data.size() > 0
+                    && request.resource.data.data.size() <= 950000
+                    && int(n) < get(/databases/$(database)/documents/fiches/$(id)).data.chunks
+                    && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid;
+      allow update: if false;
+      allow delete: if signedIn() && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid;
     }
 
     // Lien de partage : l'identifiant (aléatoire) est le secret. On peut lire une fiche

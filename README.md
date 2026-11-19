@@ -47,27 +47,24 @@ Limites du palier gratuit à connaître : 100 000 requêtes/jour et 10 ms de CPU
 5 Go et 100 000 écritures/jour (D1) ; 10 Go de fichiers (R2, qui demande une carte bancaire enregistrée
 sans facturation tant qu'on reste sous le quota).
 
-## Mise en ligne (Firebase : Auth + Firestore + Storage + Hosting)
+## Mise en ligne (Firebase : Auth + Firestore + Hosting, gratuit sans carte bancaire)
 
 Version sans serveur dans `firebase/` : le navigateur parle directement à Firebase, la sécurité est dans
-`firestore.rules` et `storage.rules` (chaque fiche n'est lisible que par son propriétaire ; un lien de partage
-rend lisible une seule fiche ; supprimer le lien la referme).
+`firestore.rules` (chaque fiche n'est lisible que par son propriétaire ; un lien de partage rend lisible une seule
+fiche ; supprimer le lien la referme).
 
-1. Console Firebase → **Créer un projet**. Puis :
-   - **Authentication** → Méthode de connexion → activer **E-mail/Mot de passe**
-   - **Firestore Database** → Créer (mode production)
-   - **Storage** → Commencer. Cloud Storage demande le plan **Blaze** (carte bancaire, quota gratuit inclus) :
-     active une alerte de budget.
-   - **Paramètres du projet → Tes applications → Web (`</>`)** → copier la configuration dans
-     `firebase/public/firebase-config.js`.
-2. Mettre l'id du projet dans `firebase/.firebaserc`.
+Pas de Cloud Storage (qui demande le forfait payant Blaze) : les fichiers sont rangés dans Firestore, découpés en
+morceaux de moins de 1 Mo. Les photos sont réduites (1800 px max, JPEG) avant l'envoi ; **limite de 5 Mo par fiche**.
+Forfait Spark : 1 Go de stockage, 50 000 lectures et 20 000 écritures par jour.
+
+1. Console Firebase → projet. Activer **Authentication → E-mail/Mot de passe** et **Firestore Database** (mode production).
+2. Copier la configuration de l'application Web dans `firebase/public/firebase-config.js` et l'id du projet dans
+   `firebase/.firebaserc`.
 3. Déployer :
    ```bash
    cd firebase && npm install
    npx firebase login
-   npx firebase deploy        # hosting + règles Firestore + règles Storage
+   npx firebase deploy        # hosting + règles Firestore
    ```
-   Au premier déploiement, Firebase peut demander d'autoriser les règles Storage à lire Firestore : accepter
-   (c'est ce qui permet au lien de partage d'ouvrir le fichier).
 
 Test des règles de sécurité avec l'émulateur (Java requis) : `cd firebase && npm run test:rules`.
