@@ -369,3 +369,9 @@ dialog .dlg-btns {
 .consent { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; font-size: .82rem; line-height: 1.4; margin: 16px 4px 0; color: var(--muted); }
 .consent input { width: 20px; height: 20px; margin-top: 1px; flex: none; padding: 0; accent-color: var(--accent); }
 .consent a { color: var(--accent); }
+
+/* fiche en cours d'envoi */
+.fiche.pending { opacity: .78; }
+.badge.pend { background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .badge.pend { animation: none; } }

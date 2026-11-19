@@ -12,7 +12,10 @@ import { openShare } from './sharing.js';
 // ---------- chargement ----------
 export async function loadFiches() {
   const snap = await getDocs(query(collection(db, 'fiches'), where('ownerId', '==', state.user.uid)));
-  state.fiches = snap.docs.map((d) => ({ id: d.id, folders: [], ...d.data() })).sort((a, b) => b.createdAt - a.createdAt);
+  const loaded = snap.docs.map((d) => ({ id: d.id, folders: [], ...d.data() }));
+  const ids = new Set(loaded.map((f) => f.id));
+  const sending = state.fiches.filter((f) => f.pending && !ids.has(f.id)); // pas encore visibles côté serveur
+  state.fiches = [...sending, ...loaded].sort((a, b) => b.createdAt - a.createdAt);
   refreshFilters();
   renderLibrary();
 }
@@ -114,6 +117,7 @@ function ficheRow(f) {
   const link = el('a', { href: '#', textContent: f.title });
   link.onclick = async (e) => {
     e.preventDefault();
+    if (f.pending) return toast('Envoi en cours, encore un instant…');
     const w = window.open('about:blank', '_blank'); // ouvert tout de suite pour ne pas être bloqué par le navigateur
     try {
       const url = URL.createObjectURL(await loadFileBlob(f.id, f.chunks, f.mime));
@@ -124,7 +128,8 @@ function ficheRow(f) {
     }
   };
   meta.append(link);
-  if (f.shared || (f.folders || []).length) meta.append(el('span', { className: 'badge', textContent: 'partagée' }));
+  if (f.pending) meta.append(el('span', { className: 'badge pend', textContent: 'envoi…' }));
+  else if (f.shared || (f.folders || []).length) meta.append(el('span', { className: 'badge', textContent: 'partagée' }));
   meta.append(el('small', { textContent: `${f.originalName} · ${new Date(f.createdAt).toLocaleDateString('fr-FR')}` }));
 
   const ico = f.thumb
@@ -140,7 +145,8 @@ function ficheRow(f) {
   edit.onclick = () => openEdit(f);
   const del = el('button', { className: 'small danger', textContent: 'Supprimer', title: 'Supprimer la fiche' });
   del.onclick = () => removeFiche(f);
-  return el('div', { className: 'fiche' }, ico, meta, el('div', { className: 'actions' }, star, share, edit, del));
+  if (f.pending) for (const b of [star, share, edit, del]) b.disabled = true;
+  return el('div', { className: 'fiche' + (f.pending ? ' pending' : '') }, ico, meta, el('div', { className: 'actions' }, star, share, edit, del));
 }
 
 ['q', 'fClasse', 'fMatiere'].forEach((id) => $(id).addEventListener('input', renderLibrary));
@@ -217,13 +223,12 @@ $('addForm').onsubmit = async (e) => {
   const cours = clean($('cours').value);
   if (!classe || !matiere || !cours) return ($('addError').textContent = 'Classe, matière et cours sont obligatoires');
   $('addSubmit').disabled = true;
-  $('addSubmit').textContent = 'Envoi…';
+  $('addSubmit').textContent = 'Préparation…';
   const uid = state.user.uid;
   const docRef = doc(collection(db, 'fiches'));
-  let created = false;
   try {
-    await requireOnline();
-    const prep = await prepareFiles(picked.map((p) => p.file)); // photos réduites, PDF contrôlé, pages réunies
+    // La vérification du réseau et la réduction des photos se font en même temps.
+    const [prep] = await Promise.all([prepareFiles(picked.map((p) => p.file)), requireOnline()]);
     const fiche = {
       ownerId: uid,
       title: clean($('title').value, 150) || cours,
@@ -238,20 +243,38 @@ $('addForm').onsubmit = async (e) => {
       createdAt: Date.now(),
     };
     if (prep.thumb) fiche.thumb = prep.thumb;
-    await setDoc(docRef, fiche);
-    created = true;
-    await saveFile(docRef.id, uid, prep.bytes);
+    // La fiche apparaît tout de suite ; l'envoi continue en arrière-plan.
+    const local = { id: docRef.id, ...fiche, pending: true };
+    state.fiches.unshift(local);
+    refreshFilters();
+    renderLibrary();
     addDialog.close();
-    toast('Fiche ajoutée ✔');
-    await loadFiches();
+    sendFiche(docRef, fiche, prep.bytes, local);
   } catch (err) {
-    if (created) await deleteDoc(docRef).catch(() => {}); // pas de fiche sans contenu
     $('addError').textContent = errMsg(err);
   } finally {
     $('addSubmit').disabled = false;
     $('addSubmit').textContent = 'Enregistrer';
   }
 };
+
+async function sendFiche(docRef, fiche, bytes, local) {
+  let created = false;
+  try {
+    await setDoc(docRef, fiche);
+    created = true;
+    await saveFile(docRef.id, fiche.ownerId, bytes);
+    delete local.pending;
+    renderLibrary();
+    toast('Fiche ajoutée ✔');
+  } catch (err) {
+    if (created) await deleteDoc(docRef).catch(() => {}); // pas de fiche sans contenu
+    state.fiches = state.fiches.filter((f) => f !== local);
+    refreshFilters();
+    renderLibrary();
+    toast(`L'envoi a échoué : ${errMsg(err)}`);
+  }
+}
 
 // ---------- modification ----------
 const editDialog = $('editDialog');

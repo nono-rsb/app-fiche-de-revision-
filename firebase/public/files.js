@@ -67,13 +67,13 @@ export async function prepareFiles(files) {
   const thumb = thumbOf(bitmaps[0]);
 
   if (bitmaps.length === 1) {
-    for (const q of [0.85, 0.7, 0.55, 0.4]) {
-      const j = await toJpeg(bitmaps[0], 1800, q);
+    for (const [side, q] of [[1600, 0.78], [1400, 0.66], [1200, 0.55], [1000, 0.45]]) { // net pour du texte, léger à envoyer
+      const j = await toJpeg(bitmaps[0], side, q);
       if (j.bytes.length <= MAX_FILE_SIZE) return { bytes: j.bytes, mime: 'image/jpeg', thumb, pages: 1, name: files[0].name };
     }
     throw new Error('Image trop lourde, même réduite.');
   }
-  for (const [side, q] of [[1600, 0.8], [1400, 0.7], [1200, 0.6], [1000, 0.5], [800, 0.45]]) {
+  for (const [side, q] of [[1600, 0.72], [1400, 0.65], [1200, 0.58], [1000, 0.5], [800, 0.45]]) {
     const pages = [];
     for (const b of bitmaps) pages.push(await toJpeg(b, side, q));
     const pdf = makePdf(pages);

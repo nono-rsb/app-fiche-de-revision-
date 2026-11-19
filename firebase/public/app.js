@@ -14,7 +14,7 @@ state.mode = 'register';
 let registering = false;
 
 // Numéro de version affiché en bas de l'écran : permet de savoir quelle version l'appareil a vraiment chargée.
-const APP_VERSION = '2026-11-19.4 · mentions légales';
+const APP_VERSION = '2026-11-19.5 · envoi plus rapide';
 $('version').textContent = `Version ${APP_VERSION}`;
 
 // ---------- compte ----------
