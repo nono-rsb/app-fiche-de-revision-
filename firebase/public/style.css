@@ -352,3 +352,5 @@ dialog .dlg-btns {
   border-radius: 0 0 32px 32px;
 }
 #sessionDialog .dlg-btns, #shareDialog .dlg-btns, #accountDialog .dlg-btns { position: static; margin: 16px 0 0; padding: 0; background: none; }
+
+.version { text-align: center; color: var(--muted); font-size: .72rem; margin: 28px 0 0; opacity: .8; }
