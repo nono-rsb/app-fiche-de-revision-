@@ -354,3 +354,18 @@ dialog .dlg-btns {
 #sessionDialog .dlg-btns, #shareDialog .dlg-btns, #accountDialog .dlg-btns { position: static; margin: 16px 0 0; padding: 0; background: none; }
 
 .version { text-align: center; color: var(--muted); font-size: .72rem; margin: 28px 0 0; opacity: .8; }
+
+/* pages légales et pied de page */
+.legal { max-width: 760px; margin: 14px auto 0; }
+.legal h1 { font-size: 1.9rem; margin: 8px 0 4px; }
+.legal h2 { font-size: 1.1rem; margin: 24px 0 6px; }
+.legal p, .legal li { line-height: 1.55; overflow-wrap: anywhere; }
+.legal ul { padding-left: 1.2rem; display: grid; gap: 6px; }
+.legal a { color: var(--accent); }
+.legal .back { margin: 0 0 6px; font-size: .9rem; }
+.legal .mailbig { font-size: 1.25rem; font-weight: 700; }
+.legal-links { text-align: center; font-size: .8rem; margin: 18px 8px 0; color: var(--muted); line-height: 1.9; }
+.legal-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; font-size: .82rem; line-height: 1.4; margin: 16px 4px 0; color: var(--muted); }
+.consent input { width: 20px; height: 20px; margin-top: 1px; flex: none; padding: 0; accent-color: var(--accent); }
+.consent a { color: var(--accent); }

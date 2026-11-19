@@ -57,7 +57,7 @@ lien referme l'accès).
 fiches classées classe › matière › cours · dépôt d'un PDF ou de plusieurs photos réunies en un seul PDF ·
 miniatures, favoris, modification · partage d'une fiche ou d'un dossier par lien (partage natif iPhone, QR code) ·
 cartes de révision avec répétition espacée (boîtes de Leitner) en mode cartes ou QCM · lecture hors connexion
-(site, liste des fiches et fiches déjà ouvertes).
+(site, liste des fiches et fiches déjà ouvertes) · pages légales (confidentialité, conditions, mentions légales, contact) et case à cocher à l'inscription.
 
 Pas de Cloud Storage (qui demande le forfait payant Blaze) : les fichiers sont rangés dans Firestore, découpés en
 morceaux de moins de 1 Mo. Les photos sont réduites (JPEG) avant l'envoi ; **limite de 5 Mo par fiche**.

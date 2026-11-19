@@ -43,6 +43,7 @@
         <input id="email" type="email" autocomplete="email" required>
         <label for="password">Mot de passe <small>(8 caractères min.)</small></label>
         <input id="password" type="password" autocomplete="current-password" minlength="8" required>
+        <label class="consent" id="consentRow"><input type="checkbox" id="consent"> <span>J'ai lu et j'accepte les <a href="/conditions" target="_blank" rel="noopener">conditions d'utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>. J'ai 15 ans ou plus, ou l'accord d'un parent.</span></label>
         <p class="forgot"><button type="button" class="link" id="forgotLink" hidden>Mot de passe oublié ?</button></p>
         <div class="error" id="authError" role="alert"></div>
         <div class="info" id="authInfo" role="status"></div>
@@ -93,6 +94,7 @@
       </section>
     </section>
     <p class="version" id="version"></p>
+    <nav class="legal-links" aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a> · <a href="/conditions">Conditions d'utilisation</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/contact">Contact</a></nav>
   </main>
 
   <nav class="tabbar" id="tabbar" aria-label="Navigation" hidden>

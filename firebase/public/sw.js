@@ -1,8 +1,8 @@
 // Service worker : l'appli s'ouvre aussi sans réseau.
 // Réseau d'abord (toujours la dernière version en ligne), cache en secours hors connexion.
-const CACHE = 'revise-v2';
+const CACHE = 'revise-v3';
 const SHELL = [
-  '/', '/index.html', '/style.css', '/app.js', '/library.js', '/review.js', '/sharing.js', '/files.js', '/pdf.js',
+  '/', '/style.css', '/app.js', '/library.js', '/review.js', '/sharing.js', '/files.js', '/pdf.js',
   '/util.js', '/state.js', '/firebase.js', '/firebase-config.js', '/vendor/firebase.js',
   '/logo.svg', '/icon-192.png', '/manifest.webmanifest',
 ];
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (e) => {
       } catch {
         const hit = (await cache.match(req)) || (await cache.match(req, { ignoreSearch: true }));
         if (hit) return hit;
-        if (req.mode === 'navigate' && url.pathname === '/') return cache.match('/index.html');
+        if (req.mode === 'navigate' && url.pathname === '/') return cache.match('/');
         return new Response('Hors connexion', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
       }
     })()

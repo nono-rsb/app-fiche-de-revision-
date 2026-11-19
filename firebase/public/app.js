@@ -14,7 +14,7 @@ state.mode = 'register';
 let registering = false;
 
 // Numéro de version affiché en bas de l'écran : permet de savoir quelle version l'appareil a vraiment chargée.
-const APP_VERSION = '2026-11-19.3 · QR code, dossiers, cartes';
+const APP_VERSION = '2026-11-19.4 · mentions légales';
 $('version').textContent = `Version ${APP_VERSION}`;
 
 // ---------- compte ----------
@@ -29,6 +29,8 @@ function setMode(mode) {
   $('switchText').textContent = reg ? 'Déjà un compte ?' : 'Pas encore de compte ?';
   $('switchLink').textContent = reg ? 'Se connecter' : 'Créer un compte';
   $('forgotLink').hidden = reg;
+  $('consentRow').hidden = !reg;
+  $('consent').required = reg;
   $('authError').textContent = '';
   $('authInfo').textContent = '';
 }
@@ -60,6 +62,7 @@ $('authForm').onsubmit = async (e) => {
       const name = clean($('name').value, 60);
       if (!name) throw new Error('Le prénom est obligatoire');
       if (password.length < 8) throw Object.assign(new Error(), { code: 'auth/weak-password' });
+      if (!$('consent').checked) throw new Error("Coche la case pour accepter les conditions d'utilisation et la politique de confidentialité.");
       registering = true;
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
