@@ -2,13 +2,22 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eaeeff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#090b18" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Révise">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>Révise apps</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <header class="top">
-    <span class="logo">📚 Révise apps</span>
+    <span class="logo"><img src="/logo.svg" alt="" width="32" height="32">Révise apps</span>
     <div class="who" id="who" hidden>
       <span id="whoName"></span>
       <button class="small" id="logoutBtn">Déconnexion</button>
@@ -18,8 +27,13 @@
   <main>
     <!-- 1. Création de compte / connexion -->
     <section id="authView" class="card auth" hidden>
-      <h1 id="authTitle">Créer un compte</h1>
-      <p class="sub">Range et partage tes fiches de révision.</p>
+      <div class="brand">
+        <img src="/logo.svg" alt="Révise apps" width="88" height="88">
+        <div>
+          <h1 id="authTitle">Créer un compte</h1>
+          <p class="sub">Range et partage tes fiches de révision.</p>
+        </div>
+      </div>
       <form id="authForm">
         <div id="nameRow">
           <label for="name">Prénom</label>
@@ -56,7 +70,7 @@
       <h3>Nouvelle fiche</h3>
       <label class="drop" id="drop" style="margin-top:12px">
         <strong>📄 Dépose un PDF ou prends une photo</strong>
-        PDF, JPG, PNG, WEBP – 20 Mo max
+        PDF, JPG, PNG, WEBP – 5 Mo max (photos réduites)
         <input type="file" id="file" accept="application/pdf,image/*">
       </label>
       <div class="picked" id="picked"></div>
