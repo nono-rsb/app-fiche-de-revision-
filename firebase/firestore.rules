@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function okMime(m) { return m in ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']; }
+    function okText(s, max) { return s is string && s.size() > 0 && s.size() <= max; }
+
+    function validFiche(d) {
+      return d.keys().hasOnly(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'shared', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'size', 'shared', 'createdAt'])
+        && d.ownerId == request.auth.uid
+        && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
+        && okText(d.originalName, 200)
+        && okMime(d.mime)
+        && d.size is int && d.size >= 0 && d.size <= 20971520
+        && d.shared is bool
+        && d.createdAt is number;
+    }
+
+    function validShare(d, id) {
+      return d.keys().hasOnly(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'createdAt'])
+        && d.keys().hasAll(['ownerId', 'ownerName', 'title', 'classe', 'matiere', 'cours', 'originalName', 'mime', 'createdAt'])
+        && d.ownerId == request.auth.uid
+        && get(/databases/$(database)/documents/fiches/$(id)).data.ownerId == request.auth.uid
+        && okText(d.ownerName, 100) && okText(d.title, 150) && okText(d.classe, 100) && okText(d.matiere, 100) && okText(d.cours, 100)
+        && okText(d.originalName, 200)
+        && okMime(d.mime)
+        && d.createdAt is number;
+    }
+
+    // Une fiche n'est visible que par son propriétaire.
+    match /fiches/{id} {
+      allow get, list: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn() && validFiche(request.resource.data);
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validFiche(request.resource.data);
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Lien de partage : l'identifiant (aléatoire) est le secret. On peut lire une fiche
+    // partagée si on connaît son lien, mais jamais lister les partages.
+    match /shares/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn() && validShare(request.resource.data, id);
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid && validShare(request.resource.data, id);
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}

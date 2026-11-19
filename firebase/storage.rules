@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Chemin : fiches/{uid}/{id de la fiche}. L'id est aussi le jeton du lien de partage.
+    match /fiches/{uid}/{fileId} {
+      allow read: if (request.auth != null && request.auth.uid == uid)
+                  || firestore.exists(/databases/(default)/documents/shares/$(fileId));
+      allow create, update: if request.auth != null && request.auth.uid == uid
+                  && request.resource.size <= 20 * 1024 * 1024
+                  && request.resource.contentType.matches('image/(jpeg|png|webp|gif)|application/pdf');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

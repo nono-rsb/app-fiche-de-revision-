@@ -46,3 +46,28 @@ Test local de la version Cloudflare : `npx wrangler d1 execute revise-apps --loc
 Limites du palier gratuit à connaître : 100 000 requêtes/jour et 10 ms de CPU par requête (Workers) ;
 5 Go et 100 000 écritures/jour (D1) ; 10 Go de fichiers (R2, qui demande une carte bancaire enregistrée
 sans facturation tant qu'on reste sous le quota).
+
+## Mise en ligne (Firebase : Auth + Firestore + Storage + Hosting)
+
+Version sans serveur dans `firebase/` : le navigateur parle directement à Firebase, la sécurité est dans
+`firestore.rules` et `storage.rules` (chaque fiche n'est lisible que par son propriétaire ; un lien de partage
+rend lisible une seule fiche ; supprimer le lien la referme).
+
+1. Console Firebase → **Créer un projet**. Puis :
+   - **Authentication** → Méthode de connexion → activer **E-mail/Mot de passe**
+   - **Firestore Database** → Créer (mode production)
+   - **Storage** → Commencer. Cloud Storage demande le plan **Blaze** (carte bancaire, quota gratuit inclus) :
+     active une alerte de budget.
+   - **Paramètres du projet → Tes applications → Web (`</>`)** → copier la configuration dans
+     `firebase/public/firebase-config.js`.
+2. Mettre l'id du projet dans `firebase/.firebaserc`.
+3. Déployer :
+   ```bash
+   cd firebase && npm install
+   npx firebase login
+   npx firebase deploy        # hosting + règles Firestore + règles Storage
+   ```
+   Au premier déploiement, Firebase peut demander d'autoriser les règles Storage à lire Firestore : accepter
+   (c'est ce qui permet au lien de partage d'ouvrir le fichier).
+
+Test des règles de sécurité avec l'émulateur (Java requis) : `cd firebase && npm run test:rules`.
