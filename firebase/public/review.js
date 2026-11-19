@@ -51,7 +51,7 @@ export function renderReview() {
   const max = Math.max(1, ...counts);
   $('boxes').replaceChildren(
     ...counts.map((n, i) => {
-      const bar = el('div', { className: 'boxbar' }, el('span', { className: 'boxn', textContent: String(n) }));
+      const bar = el('div', { className: 'boxbar' }, el('span', { className: 'boxn' + (n ? '' : ' zero'), textContent: String(n) }));
       bar.firstChild.style.setProperty('--h', `${Math.round((n / max) * 100)}%`);
       return el('div', { className: 'box' }, bar, el('span', { className: 'boxl', textContent: i === 0 ? 'À revoir' : i === 4 ? 'Sues' : `Boîte ${i + 1}` }));
     })

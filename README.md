@@ -50,11 +50,17 @@ sans facturation tant qu'on reste sous le quota).
 ## Mise en ligne (Firebase : Auth + Firestore + Hosting, gratuit sans carte bancaire)
 
 Version sans serveur dans `firebase/` : le navigateur parle directement à Firebase, la sécurité est dans
-`firestore.rules` (chaque fiche n'est lisible que par son propriétaire ; un lien de partage rend lisible une seule
-fiche ; supprimer le lien la referme).
+`firestore.rules` (chaque fiche est privée ; un lien de partage rend lisible une fiche ou un dossier ; supprimer le
+lien referme l'accès).
+
+**Fonctions** : comptes (inscription, connexion, mot de passe oublié, suppression du compte et de toutes ses données) ·
+fiches classées classe › matière › cours · dépôt d'un PDF ou de plusieurs photos réunies en un seul PDF ·
+miniatures, favoris, modification · partage d'une fiche ou d'un dossier par lien (partage natif iPhone, QR code) ·
+cartes de révision avec répétition espacée (boîtes de Leitner) en mode cartes ou QCM · lecture hors connexion
+(site, liste des fiches et fiches déjà ouvertes).
 
 Pas de Cloud Storage (qui demande le forfait payant Blaze) : les fichiers sont rangés dans Firestore, découpés en
-morceaux de moins de 1 Mo. Les photos sont réduites (1800 px max, JPEG) avant l'envoi ; **limite de 5 Mo par fiche**.
+morceaux de moins de 1 Mo. Les photos sont réduites (JPEG) avant l'envoi ; **limite de 5 Mo par fiche**.
 Forfait Spark : 1 Go de stockage, 50 000 lectures et 20 000 écritures par jour.
 
 1. Console Firebase → projet. Activer **Authentication → E-mail/Mot de passe** et **Firestore Database** (mode production).
@@ -64,10 +70,15 @@ Forfait Spark : 1 Go de stockage, 50 000 lectures et 20 000 écritures par jour.
    ```bash
    cd firebase && npm install
    npx firebase login
-   npx firebase deploy        # hosting + règles Firestore
+   npx firebase deploy        # site + règles Firestore
    ```
 
-Test des règles de sécurité avec l'émulateur (Java requis) : `cd firebase && npm run test:rules`.
+Le SDK Firebase est embarqué dans `public/vendor/firebase.js` (pas de CDN). Après une mise à jour de ses
+dépendances : `npm run build:vendor`.
+
+**Développer en local** : depuis `localhost`, le site parle aux émulateurs Firebase (jamais aux vraies données) :
+`npx firebase emulators:start --only auth,firestore,hosting`. Test des règles de sécurité (Java requis) :
+`npm run test:rules`.
 
 ### Déploiement automatique du site (GitHub Actions)
 
