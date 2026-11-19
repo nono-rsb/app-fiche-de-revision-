@@ -14,7 +14,7 @@ state.mode = 'register';
 let registering = false;
 
 // Numéro de version affiché en bas de l'écran : permet de savoir quelle version l'appareil a vraiment chargée.
-const APP_VERSION = '2026-11-19.2 · QR code, dossiers, cartes';
+const APP_VERSION = '2026-11-19.3 · QR code, dossiers, cartes';
 $('version').textContent = `Version ${APP_VERSION}`;
 
 // ---------- compte ----------

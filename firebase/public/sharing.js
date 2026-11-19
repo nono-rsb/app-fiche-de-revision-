@@ -16,7 +16,11 @@ export function openShare({ title, hint, url, shareText, unshareLabel = 'Désact
   $('shareTitle').textContent = title;
   $('shareHint').textContent = hint;
   $('shareUrl').value = url;
-  $('qr').innerHTML = qrSvg(url); // SVG produit par la bibliothèque à partir de notre adresse
+  try {
+    $('qr').innerHTML = qrSvg(url); // SVG produit par la bibliothèque à partir de notre adresse
+  } catch {
+    $('qr').textContent = 'QR code indisponible : utilise le lien ci-dessus.';
+  }
   $('nativeShareBtn').hidden = !navigator.share;
   $('nativeShareBtn').onclick = async () => {
     try {

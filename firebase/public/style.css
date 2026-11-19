@@ -299,8 +299,8 @@ main { padding-bottom: calc(110px + var(--sab)); }
 .pageRow .thumb, .pageRow .ico { width: 36px; height: 36px; border-radius: 9px; object-fit: cover; display: grid; place-items: center; }
 
 /* partage : QR code */
-.qrbox { width: 168px; margin: 16px auto 0; padding: 8px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); }
-.qrbox svg { display: block; width: 100%; height: auto; }
+.qrbox { width: 176px; height: 176px; margin: 16px auto 0; padding: 8px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); color: #333; font-size: .8rem; }
+.qrbox svg { display: block; width: 160px; height: 160px; } /* taille fixe : certains iPhone n'affichent pas un SVG sans hauteur */
 #nativeShareBtn { margin-top: 12px; }
 
 /* tableau de bord de révision */

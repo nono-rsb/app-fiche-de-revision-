@@ -1,6 +1,6 @@
 // Service worker : l'appli s'ouvre aussi sans réseau.
 // Réseau d'abord (toujours la dernière version en ligne), cache en secours hors connexion.
-const CACHE = 'revise-v1';
+const CACHE = 'revise-v2';
 const SHELL = [
   '/', '/index.html', '/style.css', '/app.js', '/library.js', '/review.js', '/sharing.js', '/files.js', '/pdf.js',
   '/util.js', '/state.js', '/firebase.js', '/firebase-config.js', '/vendor/firebase.js',
@@ -27,7 +27,7 @@ self.addEventListener('fetch', (e) => {
       try {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 6000); // réseau trop lent : on passe au cache
-        const res = await fetch(req, { signal: ctrl.signal });
+        const res = await fetch(req, { signal: ctrl.signal, cache: 'no-cache' }); // revérifie toujours auprès du serveur, jamais une vieille copie
         clearTimeout(timer);
         if (res.ok) cache.put(req, res.clone());
         return res;
