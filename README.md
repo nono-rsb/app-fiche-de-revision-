@@ -94,3 +94,7 @@ Réponses : dépôt `nono-rsb/app-fiche-de-revision-` ; script de build avant d�
 automatique à la fusion : **non** ; aperçu des pull requests : **non** (ce workflow-ci s'en charge).
 La commande crée le secret `FIREBASE_SERVICE_ACCOUNT_REVISAPP_BCC73` dans le dépôt. Les règles Firestore restent à
 publier à la main après un changement : `cd firebase && npx firebase deploy --only firestore`.
+
+## Licence
+
+Tous droits réservés : voir [LICENSE](LICENSE). Le code est visible mais ne peut pas être copié ni réutilisé sans autorisation écrite.
